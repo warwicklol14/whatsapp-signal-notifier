@@ -9,5 +9,9 @@ On subsequent runs, it uses the session to login.
 
 Made using https://github.com/Rhymen/go-whatsapp. 
 
+##Screenshot:
+
+![Screenshot of reply](Screenshot.jpg)
+
 ### Note:
 Errors may occur from time to time as I'm still new to this. I gladly welcome pull requests to this.
