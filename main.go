@@ -52,7 +52,7 @@ func (h *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 				Info: whatsapp.MessageInfo{
 					RemoteJid: message.Info.RemoteJid,
 				},
-				Text: "*This User has switched to Signal.*\nKindly use Signal app to contact him.",
+				Text: "*This user has switched to Signal.*\nKindly use Signal app to contact them.",
 			})
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr, "error sending message: %v", err)
