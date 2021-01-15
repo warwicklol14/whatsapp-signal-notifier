@@ -17,6 +17,7 @@ import (
 
 var (
 	startTime = time.Now()
+	videoSent = make(map[string]bool)
 )
 
 type waHandler struct {
@@ -40,29 +41,71 @@ func (h *waHandler) HandleError(err error) {
 	}
 }
 
-func isGroupMessage(message whatsapp.TextMessage) bool {
-	return strings.Contains(message.Info.RemoteJid, "-")
+func isGroupMessage(remoteJid string) bool {
+	return strings.Contains(remoteJid, "-")
+}
+
+func sendSwitchedMessage(whatsappConn *whatsapp.Conn, remoteJid string) {
+	_, err := whatsappConn.Send(whatsapp.TextMessage{
+		Info: whatsapp.MessageInfo{
+			RemoteJid: remoteJid,
+		},
+		Text: "*This user has switched to Signal.*\nKindly use Signal app to contact them.",
+	})
+	if err != nil {
+		log.Printf("error sending message: %v", err)
+	}
+}
+
+func isFirstMessageFromContact(remoteJid string) bool {
+	if videoSent[remoteJid] {
+		return false
+	} else {
+		return true
+	}
+}
+
+func sendSwitchVideo(whatsappConn *whatsapp.Conn, remoteJid string) {
+	switchToSignalVideo, err := os.Open("WhatsApp-Signal.mp4")
+	if err != nil {
+		log.Printf("cannot find Whatsapp-Signal.mp4")
+		return
+	}
+	defer switchToSignalVideo.Close()
+	whatsappConn.Send(whatsapp.VideoMessage{
+		Info: whatsapp.MessageInfo{
+			RemoteJid: remoteJid,
+		},
+		Type:    "video/mp4",
+		Caption: "Switch to Signal!",
+		Content: switchToSignalVideo,
+	})
+
+}
+
+func handleFirstMessageWithContact(whatsappConn *whatsapp.Conn, remoteJid string) {
+	sendSwitchVideo(whatsappConn, remoteJid)
+	videoSent[remoteJid] = true
+	if err := serializeVideoSentMap(); err != nil {
+		log.Printf("error in serialzing: %v\n", err)
+	}
 }
 
 //Optional to be implemented. Implement HandleXXXMessage for the types you need.
 func (h *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 	if !message.Info.FromMe && startTime.Before(time.Unix(int64(message.Info.Timestamp), 0)) {
-		if !isGroupMessage(message) {
-			_, err := h.c.Send(whatsapp.TextMessage{
-				Info: whatsapp.MessageInfo{
-					RemoteJid: message.Info.RemoteJid,
-				},
-				Text: "*This user has switched to Signal.*\nKindly use Signal app to contact them.",
-			})
-			if err != nil {
-				_, _ = fmt.Fprintf(os.Stderr, "error sending message: %v", err)
-				return
+		remoteJid := message.Info.RemoteJid
+		if !isGroupMessage(remoteJid) {
+			sendSwitchedMessage(h.c, remoteJid)
+			if isFirstMessageFromContact(remoteJid) {
+				handleFirstMessageWithContact(h.c, remoteJid)
 			}
 		}
 	}
 }
 
 func main() {
+
 	//create new WhatsApp connection
 	wac, err := whatsapp.NewConn(5 * time.Second)
 	if err != nil {
@@ -73,6 +116,10 @@ func main() {
 		log.Fatalf("error setting client name: %v\n", err)
 	}
 
+	err = deserializeVideoSentMap()
+	if err != nil {
+		log.Printf("error in deserialzing: %v\n", err)
+	}
 	//Add handler
 	wac.AddHandler(&waHandler{wac})
 
@@ -89,7 +136,7 @@ func main() {
 	}
 
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 	<-c
 
 	//Disconnect safe
@@ -121,6 +168,7 @@ func login(wac *whatsapp.Conn) error {
 			f, _ := os.Create("qrcode.png")
 			_, _ = f.Write(png)
 			fmt.Println("Qrcode Generated. Kindly scan and login")
+			f.Close()
 		}()
 		session, err = wac.Login(qr)
 		if err != nil {
@@ -133,6 +181,21 @@ func login(wac *whatsapp.Conn) error {
 		return fmt.Errorf("error saving session: %v\n", err)
 	}
 	return nil
+}
+
+func deserializeVideoSentMap() error {
+	if _, err := os.Stat("videosent.json"); os.IsNotExist(err) {
+		return serializeVideoSentMap()
+	}
+	JSONRaw, err := ioutil.ReadFile("videosent.json")
+	err = json.Unmarshal(JSONRaw, &videoSent)
+	return err
+}
+
+func serializeVideoSentMap() error {
+	videoSentJSON, _ := json.Marshal(videoSent)
+	err := ioutil.WriteFile("videosent.json", videoSentJSON, 0644)
+	return err
 }
 
 func readSession() (whatsapp.Session, error) {
