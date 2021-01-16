@@ -26,7 +26,6 @@ type waHandler struct {
 
 //HandleError needs to be implemented to be a valid WhatsApp handler
 func (h *waHandler) HandleError(err error) {
-
 	if e, ok := err.(*whatsapp.ErrConnectionFailed); ok {
 		log.Printf("Connection failed, underlying error: %v", e.Err)
 		log.Println("Waiting 30sec...")
@@ -43,6 +42,10 @@ func (h *waHandler) HandleError(err error) {
 
 func isGroupMessage(remoteJid string) bool {
 	return strings.Contains(remoteJid, "-")
+}
+
+func isStatusMessage(remoteJid string) bool {
+	return strings.Contains(remoteJid, "status")
 }
 
 func sendSwitchedMessage(whatsappConn *whatsapp.Conn, remoteJid string) {
@@ -95,7 +98,7 @@ func handleFirstMessageWithContact(whatsappConn *whatsapp.Conn, remoteJid string
 func (h *waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 	if !message.Info.FromMe && startTime.Before(time.Unix(int64(message.Info.Timestamp), 0)) {
 		remoteJid := message.Info.RemoteJid
-		if !isGroupMessage(remoteJid) {
+		if !isGroupMessage(remoteJid) && !isStatusMessage(remoteJid) {
 			sendSwitchedMessage(h.c, remoteJid)
 			if isFirstMessageFromContact(remoteJid) {
 				handleFirstMessageWithContact(h.c, remoteJid)
