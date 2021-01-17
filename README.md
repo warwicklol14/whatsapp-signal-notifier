@@ -5,7 +5,7 @@ It will also send them a video to persuade them to switch to Signal(made by http
 To save mobile data, it will only send them the video once. It ignores group messages.
 
 ## How to use:
-On first run, it generates a qrcode image which you have to scan using Whatsapp-Web option on your phone and login.
+On first run, it generates a qrcode image in the appdata folder which you have to scan using Whatsapp-Web option on your phone and login.
 On subsequent runs, it uses the session to login.
 
 Made using https://github.com/Rhymen/go-whatsapp. 
