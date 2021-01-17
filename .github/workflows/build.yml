@@ -24,14 +24,14 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: whatsapp-signal-notifier-windows
-        path: whatsapp-signal-notifier-windows.zip
+        path: build/whatsapp-signal-notifier-windows.zip
         
     - uses: actions/upload-artifact@v2
       with:
         name: whatsapp-signal-notifier-mac
-        path: whatsapp-signal-notifier-mac.zip
+        path: build/whatsapp-signal-notifier-mac.zip
         
     - uses: actions/upload-artifact@v2
       with:
         name: whatsapp-signal-notifier-linux
-        path: whatsapp-signal-notifier-linux.zip
+        path: build/whatsapp-signal-notifier-linux.zip
