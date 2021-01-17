@@ -15,6 +15,13 @@ import (
 	"github.com/Rhymen/go-whatsapp"
 )
 
+const (
+	QrcodeLocation              = "appdata/qrcode.png"
+	SwitchToSignalVideoLocation = "appdata/switch_to_signal_video.mp4"
+	VideoSentJsonLocation       = "appdata/video_sent.json"
+	SessionJsonLocation         = "appdata/session.json"
+)
+
 var (
 	startTime = time.Now()
 	videoSent = make(map[string]bool)
@@ -69,9 +76,9 @@ func isFirstMessageFromContact(remoteJid string) bool {
 }
 
 func sendSwitchVideo(whatsappConn *whatsapp.Conn, remoteJid string) {
-	switchToSignalVideo, err := os.Open("WhatsApp-Signal.mp4")
+	switchToSignalVideo, err := os.Open(SwitchToSignalVideoLocation)
 	if err != nil {
-		log.Printf("cannot find Whatsapp-Signal.mp4")
+		log.Printf("cannot find switch to signal video")
 		return
 	}
 	defer switchToSignalVideo.Close()
@@ -168,7 +175,7 @@ func login(wac *whatsapp.Conn) error {
 		go func() {
 			var png []byte
 			png, _ = qrcode.Encode(<-qr, qrcode.Highest, 512)
-			f, _ := os.Create("qrcode.png")
+			f, _ := os.Create(QrcodeLocation)
 			_, _ = f.Write(png)
 			fmt.Println("Qrcode Generated. Kindly scan and login")
 			f.Close()
@@ -187,29 +194,29 @@ func login(wac *whatsapp.Conn) error {
 }
 
 func deserializeVideoSentMap() error {
-	if _, err := os.Stat("videosent.json"); os.IsNotExist(err) {
+	if _, err := os.Stat(VideoSentJsonLocation); os.IsNotExist(err) {
 		return serializeVideoSentMap()
 	}
-	JSONRaw, err := ioutil.ReadFile("videosent.json")
+	JSONRaw, err := ioutil.ReadFile(VideoSentJsonLocation)
 	err = json.Unmarshal(JSONRaw, &videoSent)
 	return err
 }
 
 func serializeVideoSentMap() error {
 	videoSentJSON, _ := json.Marshal(videoSent)
-	err := ioutil.WriteFile("videosent.json", videoSentJSON, 0644)
+	err := ioutil.WriteFile(VideoSentJsonLocation, videoSentJSON, 0644)
 	return err
 }
 
 func readSession() (whatsapp.Session, error) {
 	session := whatsapp.Session{}
-	JSONRaw, err := ioutil.ReadFile("session.json")
+	JSONRaw, err := ioutil.ReadFile(SessionJsonLocation)
 	err = json.Unmarshal(JSONRaw, &session)
 	return session, err
 }
 
 func writeSession(session whatsapp.Session) error {
 	sessionJSON, _ := json.Marshal(session)
-	err := ioutil.WriteFile("session.json", sessionJSON, 0644)
+	err := ioutil.WriteFile(SessionJsonLocation, sessionJSON, 0644)
 	return err
 }
