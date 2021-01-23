@@ -5,6 +5,7 @@ cd build
 
 mkdir %project_name%\appdata
 copy ..\appdata\switch_to_signal_video.mp4 %project_name%\appdata\
+copy ..\appdata\reply_text.txt %project_name%\appdata\
 
 set GOOS=windows
 set file_name=%project_name%\%project_name%.exe

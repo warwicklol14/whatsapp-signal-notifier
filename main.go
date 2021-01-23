@@ -20,6 +20,7 @@ const (
 	SwitchToSignalVideoLocation = "appdata/switch_to_signal_video.mp4"
 	VideoSentJsonLocation       = "appdata/video_sent.json"
 	SessionJsonLocation         = "appdata/session.json"
+	ReplyTextLocation           = "appdata/reply_text.txt"
 )
 
 var (
@@ -60,11 +61,21 @@ func sendSwitchedMessage(whatsappConn *whatsapp.Conn, remoteJid string) {
 		Info: whatsapp.MessageInfo{
 			RemoteJid: remoteJid,
 		},
-		Text: "*This user has switched to Signal.*\nKindly use Signal app to contact them.",
+		Text: getReplyText(),
 	})
 	if err != nil {
 		log.Printf("error sending message: %v", err)
 	}
+}
+
+func getReplyText() string {
+	content, err := ioutil.ReadFile(ReplyTextLocation)
+	if err != nil {
+		log.Println(err)
+		return "*This user has switched to Signal.*\nKindly use Signal app to contact them."
+	}
+	// Convert []byte to string and print to screen
+	return string(content)
 }
 
 func isFirstMessageFromContact(remoteJid string) bool {

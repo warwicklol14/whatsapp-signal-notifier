@@ -5,6 +5,7 @@ cd build || exit
 
 mkdir -p $project_name/appdata
 cp ../appdata/switch_to_signal_video.mp4 $project_name/appdata/
+cp ../appdata/reply_text.txt $project_name/appdata/
 
 file_name=$project_name/$project_name.exe
 GOOS=windows go build -o $file_name ../
